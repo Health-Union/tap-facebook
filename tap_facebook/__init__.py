@@ -67,7 +67,7 @@ STREAMS = [
     "ads_insights_region",
     "ads_insights_dma",
     "ads_insights_hourly_advertiser",
-    #'leads',
+    "leads",
 ]
 
 REQUIRED_CONFIG_KEYS = ["start_date", "account_id", "access_token"]
