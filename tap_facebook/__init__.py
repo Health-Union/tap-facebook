@@ -997,6 +997,9 @@ def initialize_stream(
 
         if atrr_window := CONFIG.get('action_attribution_windows'):
             insight_attrs['action_attribution_windows']=atrr_window
+        
+        if action_breakdowns := CONFIG.get('action_breakdowns'):
+            insight_attrs['action_breakdowns']=action_breakdowns
             
         return AdsInsights(
             name,
