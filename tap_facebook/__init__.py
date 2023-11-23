@@ -194,7 +194,10 @@ def retry_pattern(backoff_type, exception, **wait_gen_kwargs):
                 # This subcode corresponds to a race condition between AdsInsights job creation and polling
                 or exception.api_error_subcode() == 33
             )
-        elif isinstance(exception, InsightsJobTimeout):
+        elif ( 
+                isinstance(exception, InsightsJobTimeout)
+             or isinstance(exception, InsightsJobFailure) 
+             ): 
             return True
         elif (
             isinstance(exception, TypeError)
@@ -871,12 +874,14 @@ class AdsInsights(Stream):
             FacebookBadObjectError,
             TypeError,
             AttributeError,
+            InsightsJobFailure,
         ),
         max_tries=5,
         factor=5,
     )
     def run_job(self, params):
         LOGGER.info("Starting adsinsights job with params %s", params)
+        breakpoint()
         job = self.account.get_insights(  # pylint: disable=no-member
             params=params, is_async=True
         )

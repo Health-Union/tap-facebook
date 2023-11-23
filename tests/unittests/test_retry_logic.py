@@ -1,7 +1,8 @@
 import json
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, MagicMock
 from tap_facebook import FacebookRequestError
+from tap_facebook import InsightsJobFailure
 from tap_facebook import facebook_business
 from facebook_business.exceptions import FacebookBadObjectError
 from facebook_business import FacebookAdsApi
@@ -224,7 +225,7 @@ class TestInsightJobs(unittest.TestCase):
         """AdInsights.api_get() polls the job status of an insights job we've requested
         that Facebook generate. This test makes a request with a mock response to
         raise a 400 status error that should be retried.
-
+        An additional test case has been incorporated to handle the Job Failure behavior.
         We expect the tap to retry this request up to 5 times for each insights job attempted.
         """
 
@@ -232,9 +233,15 @@ class TestInsightJobs(unittest.TestCase):
                 message='Unsupported get request; Object does not exist',
                 request_context={"":Mock()},
                 http_status=400,
-                http_headers=Mock(),
+                http_headers={'header':'test'},
                 body={"error": {"error_subcode": 33}}
             )
+        
+        mocked_job_failed_response = {
+            "async_status": "Job Failed",
+            "async_percent_completion": 60,
+            "id": "2134"
+        }
 
         mocked_good_response = {
             "async_status": "Job Completed",
@@ -245,17 +252,26 @@ class TestInsightJobs(unittest.TestCase):
         mocked_api_get = Mock()
         mocked_api_get.side_effect = [
             mocked_bad_response,
-            mocked_bad_response,
+            mocked_job_failed_response,
             mocked_good_response
         ]
+        
+        header_get = Mock()
+        header_get.return_value = {'x-fb-ads-insights-throttle': '{"acc_id_util_pct": 10}' }
 
         # Create the mock and force the function to throw an error
-        mocked_account = Mock()
-        mocked_account.get_insights = Mock()
+        mocked_account = MagicMock()
+        mocked_account.get_insights = MagicMock()
         mocked_account.get_insights.return_value.api_get = mocked_api_get
+        mocked_account.get_insights.return_value.headers = header_get
 
         # Initialize the object and call `sync()`
         ad_insights_object = AdsInsights('', mocked_account, '', '', {}, {})
         ad_insights_object.run_job({})
+        
         self.assertEquals(3, mocked_account.get_insights.return_value.api_get.call_count)
-        self.assertEquals(1, mocked_account.get_insights.call_count)
+        # 1 - no get_insights call
+        # 1 - 2 calls of get_insights
+        # 2 - for getting the acc_id_util_pct value, calls limit
+        self.assertEquals(4, mocked_account.get_insights.call_count)
+
