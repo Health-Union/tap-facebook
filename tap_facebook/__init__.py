@@ -881,7 +881,6 @@ class AdsInsights(Stream):
     )
     def run_job(self, params):
         LOGGER.info("Starting adsinsights job with params %s", params)
-        breakpoint()
         job = self.account.get_insights(  # pylint: disable=no-member
             params=params, is_async=True
         )

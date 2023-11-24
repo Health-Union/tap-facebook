@@ -205,11 +205,15 @@ class TestInsightJobs(unittest.TestCase):
             http_headers=Mock(),
             body={"error": {"error_subcode": 33}}
         )
+        
+        header_get = Mock()
+        header_get.return_value = {'x-fb-ads-insights-throttle': '{"acc_id_util_pct": 10}' }
+        
         # Create the mock and force the function to throw an error
         mocked_account = Mock()
         mocked_account.get_insights = Mock()
         mocked_account.get_insights.return_value.api_get = mocked_api_get
-
+        mocked_account.get_insights.return_value.headers = header_get
 
         # Initialize the object and call `sync()`
         ad_insights_object = AdsInsights('', mocked_account, '', '', {}, {})
@@ -217,7 +221,7 @@ class TestInsightJobs(unittest.TestCase):
             ad_insights_object.run_job({})
         # 5 is the max tries specified in the tap
         self.assertEquals(25, mocked_account.get_insights.return_value.api_get.call_count)
-        self.assertEquals(5, mocked_account.get_insights.call_count )
+        self.assertEquals(10, mocked_account.get_insights.call_count )
 
 
 
