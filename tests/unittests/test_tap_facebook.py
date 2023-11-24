@@ -82,20 +82,20 @@ class TestPrimaryKeyInclusion(unittest.TestCase):
 
 class TestGetStreamsToSync(unittest.TestCase):
 
-
+    @patch("tap_facebook.CONFIG", {"account_id": 'test_account'})
     def test_getting_streams_to_sync(self):
         catalog_entry= {
             'streams': [
                 {
-                    'stream': 'adcreative',
-                    'tap_stream_id': 'adcreative',
+                    'stream': 'adcreative__test_account',
+                    'tap_stream_id': 'adcreative__test_account',
                     'schema': {},
                     'metadata': [{'breadcrumb': (),
                                   'metadata': {'selected': True}}]
                 },
                 {
-                    'stream': 'ads',
-                    'tap_stream_id': 'ads',
+                    'stream': 'ads__test_account',
+                    'tap_stream_id': 'ads__test_account',
                     'schema': {},
                     'metadata': [{'breadcrumb': (),
                                   'metadata': {'selected': False}}]
@@ -107,7 +107,7 @@ class TestGetStreamsToSync(unittest.TestCase):
 
         streams_to_sync = tap_facebook.get_streams_to_sync(None, catalog, None)
         names_to_sync = [stream.name for stream in streams_to_sync]
-        self.assertEqual(['adcreative'], names_to_sync)
+        self.assertEqual(['adcreative__test_account'], names_to_sync)
 
 class TestDateTimeParsing(unittest.TestCase):
 
