@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, MagicMock
 from unittest import mock
 from tap_facebook import AdCreative, Ads, AdSets, Campaigns, AdsInsights, Leads
 
@@ -12,7 +12,7 @@ class TestAttributErrorBackoff(unittest.TestCase):
             We mock this method to raise a `AttributeError` and expect the tap to retry this that function up to 5 times,
             which is the current hard coded `max_tries` value.
         """
-
+    
         # Mock get_ad_creatives function to throw AttributeError exception
         mocked_account = Mock()
         mocked_account.get_ad_creatives = Mock()
@@ -55,15 +55,21 @@ class TestAttributErrorBackoff(unittest.TestCase):
             which is the current hard coded `max_tries` value.
         """
         # Mock ad object
+        header_get = Mock()
+        header_get.return_value = {'x-fb-ads-insights-throttle': '{"acc_id_util_pct": 10}' }
+        
         mocked_ad = Mock()
         mocked_ad.api_get = Mock()
         mocked_ad.__getitem__ = Mock()
         mocked_ad.api_get.side_effect = AttributeError
 
         # # Mock get_ads function return mocked ad object
-        mocked_account = Mock()
-        mocked_account.get_ads = Mock()
+        mocked_account = MagicMock()
+        mocked_account.get_ads = MagicMock()
         mocked_account.get_ads.side_effect = [[mocked_ad]]
+        
+        mocked_account.get_insights = MagicMock()
+        mocked_account.get_insights.return_value.headers = header_get
 
         # Iterate ads object which calls prepare_record() inside and verify AttributeError is raised
         ad_object = Ads('', mocked_account, '', '', '')
@@ -104,6 +110,9 @@ class TestAttributErrorBackoff(unittest.TestCase):
         """
 
         # Mock adset object
+        header_get = Mock()
+        header_get.return_value = {'x-fb-ads-insights-throttle': '{"acc_id_util_pct": 10}' }
+        
         mocked_adset = Mock()
         mocked_adset.api_get = Mock()
         mocked_adset.__getitem__ = Mock()
@@ -113,6 +122,8 @@ class TestAttributErrorBackoff(unittest.TestCase):
         mocked_account = Mock()
         mocked_account.get_ad_sets = Mock()
         mocked_account.get_ad_sets.side_effect = [[mocked_adset]]
+        mocked_account.get_insights = MagicMock()
+        mocked_account.get_insights.return_value.headers = header_get
 
         # Iterate adset object which calls prepare_record() inside and verify AttributeError is raised
         ad_set_object = AdSets('', mocked_account, '', '', '')
@@ -153,6 +164,9 @@ class TestAttributErrorBackoff(unittest.TestCase):
         """
 
         # # Mock campaign object
+        header_get = Mock()
+        header_get.return_value = {'x-fb-ads-insights-throttle': '{"acc_id_util_pct": 10}' }
+        
         mocked_campaign = Mock()
         mocked_campaign.api_get = Mock()
         mocked_campaign.__getitem__ = Mock()
@@ -162,6 +176,8 @@ class TestAttributErrorBackoff(unittest.TestCase):
         mocked_account = Mock()
         mocked_account.get_campaigns = Mock()
         mocked_account.get_campaigns.side_effect = [[mocked_campaign]]
+        mocked_account.get_insights = MagicMock()
+        mocked_account.get_insights.return_value.headers = header_get
 
         # Iterate campaigns object which calls prepare_record() inside and verify AttributeError is raised
         campaign_object = Campaigns('', mocked_account, '', '', '')

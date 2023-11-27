@@ -97,8 +97,10 @@ CONFIG = {}
 class TapFacebookException(Exception):
     pass
 
-
 class InsightsJobTimeout(TapFacebookException):
+    pass
+
+class InsightsJobFailure(TapFacebookException):
     pass
 
 
@@ -192,7 +194,10 @@ def retry_pattern(backoff_type, exception, **wait_gen_kwargs):
                 # This subcode corresponds to a race condition between AdsInsights job creation and polling
                 or exception.api_error_subcode() == 33
             )
-        elif isinstance(exception, InsightsJobTimeout):
+        elif ( 
+                isinstance(exception, InsightsJobTimeout)
+             or isinstance(exception, InsightsJobFailure) 
+             ): 
             return True
         elif (
             isinstance(exception, TypeError)
@@ -869,6 +874,7 @@ class AdsInsights(Stream):
             FacebookBadObjectError,
             TypeError,
             AttributeError,
+            InsightsJobFailure,
         ),
         max_tries=5,
         factor=5,
@@ -894,7 +900,18 @@ class AdsInsights(Stream):
 
             if status == "Job Completed":
                 return job
-
+            elif status == "Job Failed":
+                pretty_error_message = (
+                    "Insights job {} has failed. "
+                    + "This is an intermittent error and may resolve itself on subsequent queries to the Facebook API. "
+                    + "Reference: https://developers.facebook.com/docs/marketing-api/insights/best-practices/"
+                )
+                raise InsightsJobFailure(
+                    pretty_error_message.format(
+                        job_id
+                    )
+                )
+                
             if duration > INSIGHTS_MAX_WAIT_TO_START_SECONDS and percent_complete == 0:
                 pretty_error_message = (
                     "Insights job {} did not start after {} seconds. "
@@ -997,6 +1014,9 @@ def initialize_stream(
 
         if atrr_window := CONFIG.get('action_attribution_windows'):
             insight_attrs['action_attribution_windows']=atrr_window
+        
+        if action_breakdowns := CONFIG.get('action_breakdowns'):
+            insight_attrs['action_breakdowns']=action_breakdowns
             
         return AdsInsights(
             name,

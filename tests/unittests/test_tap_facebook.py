@@ -33,6 +33,7 @@ class TestAdsInsights(unittest.TestCase):
                          [{'since': expected_date.to_date_string(),
                            'until': expected_date.to_date_string()}])
 
+    @patch("tap_facebook.CONFIG", {"insights_buffer_days": 28})
     def test_insights_start_dates_adjust_if_inside_window(self):
         input_date = pendulum.today().subtract(months=1)
         expected_date = input_date.subtract(days=28)
@@ -42,10 +43,10 @@ class TestAdsInsights(unittest.TestCase):
             stream_alias="insights",
             options={},
             catalog_entry=self.fake_catalog_entry,
-            state={'bookmarks':{'insights': {'date_start': input_date.to_date_string()}}})
+            state={'bookmarks':{'insights': {'date_start': input_date.to_date_string()}, 
+                                'insights_buffer_days': 28 }})
         params = list(itertools.islice(insights.job_params(), 5))
-
-
+        
         self.assertEqual(params[0]['time_ranges'],
                          [{'since': expected_date.to_date_string(),
                            'until': expected_date.to_date_string()}])
@@ -56,7 +57,7 @@ class TestAdsInsights(unittest.TestCase):
                            'until': expected_date.to_date_string()}])
 
     def test_insights_job_params_stops(self):
-        start_date = pendulum.today().subtract(days=2)
+        start_date = pendulum.today().subtract(days=29)
         insights = AdsInsights(
             name='insights',
             account=None,
@@ -64,7 +65,6 @@ class TestAdsInsights(unittest.TestCase):
             options={},
             catalog_entry=self.fake_catalog_entry,
             state={'bookmarks':{'insights': {'date_start': start_date.to_date_string()}}})
-
         self.assertEqual(31, len(list(insights.job_params())))
 
 
@@ -82,20 +82,20 @@ class TestPrimaryKeyInclusion(unittest.TestCase):
 
 class TestGetStreamsToSync(unittest.TestCase):
 
-
+    @patch("tap_facebook.CONFIG", {"account_id": 'test_account'})
     def test_getting_streams_to_sync(self):
         catalog_entry= {
             'streams': [
                 {
-                    'stream': 'adcreative',
-                    'tap_stream_id': 'adcreative',
+                    'stream': 'adcreative__test_account',
+                    'tap_stream_id': 'adcreative__test_account',
                     'schema': {},
                     'metadata': [{'breadcrumb': (),
                                   'metadata': {'selected': True}}]
                 },
                 {
-                    'stream': 'ads',
-                    'tap_stream_id': 'ads',
+                    'stream': 'ads__test_account',
+                    'tap_stream_id': 'ads__test_account',
                     'schema': {},
                     'metadata': [{'breadcrumb': (),
                                   'metadata': {'selected': False}}]
@@ -107,7 +107,7 @@ class TestGetStreamsToSync(unittest.TestCase):
 
         streams_to_sync = tap_facebook.get_streams_to_sync(None, catalog, None)
         names_to_sync = [stream.name for stream in streams_to_sync]
-        self.assertEqual(['adcreative'], names_to_sync)
+        self.assertEqual(['adcreative__test_account'], names_to_sync)
 
 class TestDateTimeParsing(unittest.TestCase):
 

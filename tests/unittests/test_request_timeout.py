@@ -1,6 +1,6 @@
 import unittest
 import tap_facebook
-from unittest.mock import Mock
+from unittest.mock import Mock, MagicMock
 from unittest import mock
 from requests.exceptions import ConnectionError, Timeout
 from tap_facebook import AdCreative, Ads, AdSets, Campaigns, AdsInsights, Leads
@@ -57,6 +57,9 @@ class TestRequestTimeoutBackoff(unittest.TestCase):
             which is the current hard coded `max_tries` value.
         """
         # Mock ad object
+        header_get = Mock()
+        header_get.return_value = {'x-fb-ads-insights-throttle': '{"acc_id_util_pct": 10}' }
+        
         mocked_ad = Mock()
         mocked_ad.api_get = Mock()
         mocked_ad.__getitem__ = Mock()
@@ -66,6 +69,9 @@ class TestRequestTimeoutBackoff(unittest.TestCase):
         mocked_account = Mock()
         mocked_account.get_ads = Mock()
         mocked_account.get_ads.side_effect = [[mocked_ad]]
+        
+        mocked_account.get_insights = MagicMock()
+        mocked_account.get_insights.return_value.headers = header_get
 
         # Iterate ads object which calls prepare_record() inside and verify Timeout is raised
         ad_object = Ads('', mocked_account, '', '', '')
@@ -106,6 +112,9 @@ class TestRequestTimeoutBackoff(unittest.TestCase):
         """
 
         # Mock adset object
+        header_get = Mock()
+        header_get.return_value = {'x-fb-ads-insights-throttle': '{"acc_id_util_pct": 10}' }
+        
         mocked_adset = Mock()
         mocked_adset.api_get = Mock()
         mocked_adset.__getitem__ = Mock()
@@ -115,6 +124,8 @@ class TestRequestTimeoutBackoff(unittest.TestCase):
         mocked_account = Mock()
         mocked_account.get_ad_sets = Mock()
         mocked_account.get_ad_sets.side_effect = [[mocked_adset]]
+        mocked_account.get_insights = MagicMock()
+        mocked_account.get_insights.return_value.headers = header_get
 
         # Iterate adset object which calls prepare_record() inside and verify Timeout is raised
         ad_set_object = AdSets('', mocked_account, '', '', '')
@@ -155,6 +166,9 @@ class TestRequestTimeoutBackoff(unittest.TestCase):
         """
 
         # # Mock campaign object
+        header_get = Mock()
+        header_get.return_value = {'x-fb-ads-insights-throttle': '{"acc_id_util_pct": 10}' }
+        
         mocked_campaign = Mock()
         mocked_campaign.api_get = Mock()
         mocked_campaign.__getitem__ = Mock()
@@ -164,6 +178,9 @@ class TestRequestTimeoutBackoff(unittest.TestCase):
         mocked_account = Mock()
         mocked_account.get_campaigns = Mock()
         mocked_account.get_campaigns.side_effect = [[mocked_campaign]]
+        
+        mocked_account.get_insights = MagicMock()
+        mocked_account.get_insights.return_value.headers = header_get
 
         # Iterate campaigns object which calls prepare_record() inside and verify Timeout is raised
         campaign_object = Campaigns('', mocked_account, '', '', '')
@@ -246,6 +263,9 @@ class TestConnectionErrorBackoff(unittest.TestCase):
             which is the current hard coded `max_tries` value.
         """
         # Mock ad object
+        header_get = Mock()
+        header_get.return_value = {'x-fb-ads-insights-throttle': '{"acc_id_util_pct": 10}' }
+        
         mocked_ad = Mock()
         mocked_ad.api_get = Mock()
         mocked_ad.__getitem__ = Mock()
@@ -255,6 +275,9 @@ class TestConnectionErrorBackoff(unittest.TestCase):
         mocked_account = Mock()
         mocked_account.get_ads = Mock()
         mocked_account.get_ads.side_effect = [[mocked_ad]]
+        
+        mocked_account.get_insights = MagicMock()
+        mocked_account.get_insights.return_value.headers = header_get
 
         # Iterate ads object which calls prepare_record() inside and verify ConnectionError is raised
         ad_object = Ads('', mocked_account, '', '', '')
@@ -295,6 +318,9 @@ class TestConnectionErrorBackoff(unittest.TestCase):
         """
 
         # Mock adset object
+        header_get = Mock()
+        header_get.return_value = {'x-fb-ads-insights-throttle': '{"acc_id_util_pct": 10}' }
+        
         mocked_adset = Mock()
         mocked_adset.api_get = Mock()
         mocked_adset.__getitem__ = Mock()
@@ -304,6 +330,9 @@ class TestConnectionErrorBackoff(unittest.TestCase):
         mocked_account = Mock()
         mocked_account.get_ad_sets = Mock()
         mocked_account.get_ad_sets.side_effect = [[mocked_adset]]
+        
+        mocked_account.get_insights = MagicMock()
+        mocked_account.get_insights.return_value.headers = header_get
 
         # Iterate adset object which calls prepare_record() inside and verify ConnectionError is raised
         ad_set_object = AdSets('', mocked_account, '', '', '')
@@ -344,6 +373,9 @@ class TestConnectionErrorBackoff(unittest.TestCase):
         """
 
         # # Mock campaign object
+        header_get = Mock()
+        header_get.return_value = {'x-fb-ads-insights-throttle': '{"acc_id_util_pct": 10}' }
+        
         mocked_campaign = Mock()
         mocked_campaign.api_get = Mock()
         mocked_campaign.__getitem__ = Mock()
@@ -353,6 +385,8 @@ class TestConnectionErrorBackoff(unittest.TestCase):
         mocked_account = Mock()
         mocked_account.get_campaigns = Mock()
         mocked_account.get_campaigns.side_effect = [[mocked_campaign]]
+        mocked_account.get_insights = MagicMock()
+        mocked_account.get_insights.return_value.headers = header_get
 
         # Iterate campaigns object which calls prepare_record() inside and verify ConnectionError is raised
         campaign_object = Campaigns('', mocked_account, '', '', '')
