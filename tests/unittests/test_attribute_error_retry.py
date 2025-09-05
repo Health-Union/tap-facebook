@@ -24,7 +24,7 @@ class TestAttributErrorBackoff(unittest.TestCase):
             ad_creative_object.get_adcreatives()
 
         # verify get_ad_creatives() is called 5 times as max 5 reties provided for function
-        self.assertEquals(mocked_account.get_ad_creatives.call_count, 5)
+        self.assertEqual(mocked_account.get_ad_creatives.call_count, 5)
 
     def test_call_get_ads(self, mocked_sleep):
         """ 
@@ -44,7 +44,7 @@ class TestAttributErrorBackoff(unittest.TestCase):
             ad_object._call_get_ads('test')
 
         # verify get_ads() is called 5 times as max 5 reties provided for function
-        self.assertEquals(mocked_account.get_ads.call_count, 5)
+        self.assertEqual(mocked_account.get_ads.call_count, 5)
 
     @mock.patch("pendulum.parse")
     def test_ad_prepare_record(self, mocked_parse, mocked_sleep):
@@ -78,7 +78,7 @@ class TestAttributErrorBackoff(unittest.TestCase):
                 pass
 
         # verify prepare_record() function by checking call count of mocked ad.api_get()
-        self.assertEquals(mocked_ad.api_get.call_count, 5)
+        self.assertEqual(mocked_ad.api_get.call_count, 5)
 
     def test__call_get_ad_sets(self, mocked_sleep):
         """ 
@@ -98,7 +98,7 @@ class TestAttributErrorBackoff(unittest.TestCase):
             ad_set_object._call_get_ad_sets('test')
 
         # verify get_ad_sets() is called 5 times as max 5 reties provided for function
-        self.assertEquals(mocked_account.get_ad_sets.call_count, 5)
+        self.assertEqual(mocked_account.get_ad_sets.call_count, 5)
 
     @mock.patch("pendulum.parse")
     def test_adset_prepare_record(self, mocked_parse, mocked_sleep):
@@ -132,7 +132,7 @@ class TestAttributErrorBackoff(unittest.TestCase):
                 pass
 
         # verify prepare_record() function by checking call count of mocked ad.api_get()
-        self.assertEquals(mocked_adset.api_get.call_count, 5)
+        self.assertEqual(mocked_adset.api_get.call_count, 5)
 
     def test__call_get_campaigns(self, mocked_sleep):
         """ 
@@ -152,7 +152,7 @@ class TestAttributErrorBackoff(unittest.TestCase):
             campaigns_object._call_get_campaigns('test')
 
         # verify get_campaigns() is called 5 times as max 5 reties provided for function
-        self.assertEquals(mocked_account.get_campaigns.call_count, 5)
+        self.assertEqual(mocked_account.get_campaigns.call_count, 5)
 
     @mock.patch("pendulum.parse")
     def test_campaign_prepare_record(self, mocked_parse, mocked_sleep):
@@ -186,7 +186,7 @@ class TestAttributErrorBackoff(unittest.TestCase):
                 pass
 
         # verify prepare_record() function by checking call count of mocked ad.api_get()
-        self.assertEquals(mocked_campaign.api_get.call_count, 5)
+        self.assertEqual(mocked_campaign.api_get.call_count, 5)
 
     def test_run_job(self, mocked_sleep):
         """ 
@@ -206,4 +206,4 @@ class TestAttributErrorBackoff(unittest.TestCase):
             ads_insights_object.run_job('test')
 
         # verify get_insights() is called 5 times as max 5 reties provided for function
-        self.assertEquals(mocked_account.get_insights.call_count, 5)
+        self.assertEqual(mocked_account.get_insights.call_count, 5)

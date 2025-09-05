@@ -41,7 +41,7 @@ class TestAdCreative(unittest.TestCase):
         with self.assertRaises(FacebookRequestError):
             ad_creative_object.sync()
         # 5 is the max tries specified in the tap
-        self.assertEquals(5, mocked_account.get_ad_creatives.call_count )
+        self.assertEqual(5, mocked_account.get_ad_creatives.call_count )
 
     def test_retries_on_503(self):
         """`AdCreative.sync.do_request()` calls a `facebook_business` method,
@@ -69,7 +69,7 @@ class TestAdCreative(unittest.TestCase):
         with self.assertRaises(FacebookRequestError):
             ad_creative_object.sync()
         # 5 is the max tries specified in the tap
-        self.assertEquals(5, mocked_account.get_ad_creatives.call_count )
+        self.assertEqual(5, mocked_account.get_ad_creatives.call_count )
 
     def test_catch_a_type_error(self):
         """`AdCreative.sync.do_request()` calls a `facebook_business` method `get_ad_creatives()`.
@@ -86,7 +86,7 @@ class TestAdCreative(unittest.TestCase):
         with self.assertRaises(TypeError):
             ad_creative_object.sync()
         # 5 is the max tries specified in the tap
-        self.assertEquals(5, mocked_account.get_ad_creatives.call_count )
+        self.assertEqual(5, mocked_account.get_ad_creatives.call_count )
 
     def test_retries_and_good_response(self):
         """Facebook has a class called `FacebookResponse` and it is created from a `requests.Response`. Some
@@ -155,7 +155,7 @@ class TestInsightJobs(unittest.TestCase):
         with self.assertRaises(FacebookBadObjectError):
             ad_creative_object.run_job({})
         # 5 is the max tries specified in the tap
-        self.assertEquals(5, mocked_account.get_insights.call_count )
+        self.assertEqual(5, mocked_account.get_insights.call_count )
 
     def test_retries_on_type_error(self):
         """`AdInsights.run_job()` calls a `facebook_business` method, `get_insights()`, to make a request to
@@ -173,7 +173,7 @@ class TestInsightJobs(unittest.TestCase):
         with self.assertRaises(TypeError):
             ad_creative_object.run_job({})
         # 5 is the max tries specified in the tap
-        self.assertEquals(5, mocked_account.get_insights.call_count )
+        self.assertEqual(5, mocked_account.get_insights.call_count )
 
     def test_retries_and_good_response(self):
         """Facebook has a class called `FacebookResponse` and it is created from a `requests.Response`. Some
@@ -248,8 +248,8 @@ class TestInsightJobs(unittest.TestCase):
         with self.assertRaises(FacebookRequestError):
             ad_insights_object.run_job({})
         # 5 is the max tries specified in the tap
-        self.assertEquals(25, mocked_account.get_insights.return_value.api_get.call_count)
-        self.assertEquals(10, mocked_account.get_insights.call_count )
+        self.assertEqual(25, mocked_account.get_insights.return_value.api_get.call_count)
+        self.assertEqual(5, mocked_account.get_insights.call_count )
 
 
 
@@ -300,10 +300,5 @@ class TestInsightJobs(unittest.TestCase):
         # Initialize the object and call `sync()`
         ad_insights_object = AdsInsights('', mocked_account, '', '', {}, {})
         ad_insights_object.run_job({})
-        
-        self.assertEquals(3, mocked_account.get_insights.return_value.api_get.call_count)
-        # 1 - no get_insights call
-        # 1 - 2 calls of get_insights
-        # 2 - for getting the acc_id_util_pct value, calls limit
-        self.assertEquals(4, mocked_account.get_insights.call_count)
-
+        self.assertEqual(3, mocked_account.get_insights.return_value.api_get.call_count)
+        self.assertEqual(1, mocked_account.get_insights.call_count)

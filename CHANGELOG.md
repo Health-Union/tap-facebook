@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.24.0
+  * Bump facebook_business SDK to v23.0.1 [#255](https://github.com/singer-io/tap-facebook/pull/255)
+  * Remove Deprecated Fields from adcreative [#255](https://github.com/singer-io/tap-facebook/pull/255)
+
+## 1.23.0
+  * Add default value of missing pk for ads_insights_hourly_advertiser [#250](https://github.com/singer-io/tap-facebook/pull/250)
+
+## 1.22.1
+  * Bump dependency versions for twistlock compliance [#247](https://github.com/singer-io/tap-facebook/pull/247)
+
+## 1.22.0
+  * Adds warning when 'reach' is requested for breakdown queries older than 13 months due to Meta API changes  [#245](https://github.com/singer-io/tap-facebook/pull/245)
+
+## 1.21.0
+  * Bump facebook_business SDK to v21.0.5 [#242](https://github.com/singer-io/tap-facebook/pull/242)
+
 ## 1.20.2
   * Bump facebook_business SDK to v19.0.2 [#238](https://github.com/singer-io/tap-facebook/pull/239)
 
