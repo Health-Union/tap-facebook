@@ -394,8 +394,13 @@ class AdCreative(Stream):
                 api_batch.execute()
                 api_batch = API.new_batch()
             # Add a call to the batch with the full object
+            if obj["id"] in CONFIG.get('skip_adcreative_ids', {}).keys():
+                exclude_fields =  CONFIG.get('skip_adcreative_ids')[obj["id"]]
+                fields_to_extract = [f for f in self.fields() if f not in exclude_fields]
+            else:
+                fields_to_extract = self.fields()
             obj.api_get(
-                fields=self.fields(),
+                fields=fields_to_extract,
                 batch=api_batch,
                 success=partial(
                     batch_record_success,
