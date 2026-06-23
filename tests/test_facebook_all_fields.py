@@ -13,7 +13,7 @@ class FacebookAllFieldsTest(AllFieldsTest, FacebookBaseTest):
 
     is_done = None
 
-    # https://jira.talendforge.org/browse/TDL-24424
+    # https://qlik-dev.atlassian.net/browse/SAC-24424
     MISSING_FIELDS = {
         "ads_insights" : {
             'outbound_clicks',
@@ -209,15 +209,20 @@ class FacebookAllFieldsTest(AllFieldsTest, FacebookBaseTest):
         }
     }
 
-    # TODO: https://jira.talendforge.org/browse/TDL-26640
     EXCLUDE_STREAMS = {
-        'ads_insights_hourly_advertiser',   # TDL-24312, TDL-26640
-        'ads_insights_platform_and_device', # TDL-26640
-        'ads_insights',                     # TDL-26640
-        'ads_insights_age_and_gender',      # TDL-26640
-        'ads_insights_country',             # TDL-26640
-        'ads_insights_dma',                 # TDL-26640
-        'ads_insights_region'               # TDL-26640
+        'ads_insights_hourly_advertiser',    # SAC-24312
+        'ads_insights_platform_and_device',  # SAC-30725
+        'ads_insights',                      # SAC-30725
+        'ads_insights_age_and_gender',       # SAC-30725
+        'ads_insights_country',              # SAC-30725
+        'ads_insights_dma',                  # SAC-30725
+        'ads_insights_region'                # SAC-30725
+    }
+
+    FICKLE_FIELDS = {
+        "adcreative": {
+            'video_id',
+        }
     }
 
     @staticmethod
@@ -228,14 +233,47 @@ class FacebookAllFieldsTest(AllFieldsTest, FacebookBaseTest):
         expected_streams = self.expected_metadata().keys()
         self.assert_message = f"JIRA ticket has moved to done, \
                                 re-add the applicable stream to the test: {0}"
-        assert base.JIRA_CLIENT.get_status_category("TDL-24312") != 'done',\
+        assert base.JIRA_CLIENT.get_status_category("SAC-24312") != 'done',\
             self.assert_message.format('ads_insights_hourly_advertiser')
         expected_streams = self.expected_metadata().keys() - {'ads_insights_hourly_advertiser'}
         LOGGER.warn(f"Skipped streams: {'ads_insights_hourly_advertiser'}")
-
-        assert base.JIRA_CLIENT.get_status_category("TDL-26640") != 'done',\
-            self.assert_message.format(self.EXCLUDE_STREAMS)
         expected_streams = self.expected_metadata().keys() - self.EXCLUDE_STREAMS
         LOGGER.warn(f"Skipped streams: {self.EXCLUDE_STREAMS}")
 
         return expected_streams
+
+    def test_all_fields_for_streams_are_replicated(self):
+        for stream in self.test_streams:
+            with self.subTest(stream=stream):
+
+                # gather expectations
+                self.expected_all_keys = (
+                    self.selected_fields.get(stream, set())
+                    - set(self.MISSING_FIELDS.get(stream, {})) \
+                    - set(self.KEYS_WITH_NO_DATA.get(stream,{})) \
+                    | set(self.EXTRA_FIELDS.get(stream, {}))
+                )
+
+                # gather results
+                self.fields_replicated = self.actual_fields.get(stream, set())
+                self.remove_bad_keys(stream)
+
+                fickle_fields = self.FICKLE_FIELDS.get(stream, set())
+
+                # Top level check for fickle fields, strict assertion is maintained
+                top_level_fickle = fickle_fields & self.fields_replicated
+
+                # Nested check for fickle field, skipping strict assertion
+                excluded_fickle = fickle_fields - top_level_fickle
+
+                self.assertSetEqual(
+                    self.fields_replicated - excluded_fickle,
+                    self.expected_all_keys - excluded_fickle,
+                    logging=f"verify all fields are replicated for stream {stream}"
+                )
+
+                if excluded_fickle:
+                    LOGGER.warning(
+                        f"Fickle fields missing for stream {stream} at top level,"
+                        f"likely nested: {excluded_fickle}"
+                    )
