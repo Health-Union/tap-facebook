@@ -325,9 +325,7 @@ class IncrementalStream(Stream):
                 yield {"record": record}
 
             if max_bookmark:
-                yield {
-                    "state": advance_bookmark(self, UPDATED_TIME_KEY, str(max_bookmark))
-                }
+                yield {'state': advance_bookmark(self, UPDATED_TIME_KEY, max_bookmark.isoformat())}
 
 
 def batch_record_success(response, stream=None, transformer=None, schema=None):
@@ -719,7 +717,7 @@ class Leads(Stream):
 
         # Ensure the final batch is executed
         api_batch.execute()
-        return str(pendulum.parse(latest_lead[self.replication_key]))
+        return pendulum.parse(latest_lead[self.replication_key]).isoformat()
 
     @retry_pattern(backoff.expo, (Timeout, ConnectionError), max_tries=5, factor=2)
     # Added retry_pattern to handle AttributeError raised from account.get_ads() below
@@ -752,12 +750,8 @@ class Leads(Stream):
             yield from ad.get_leads(params=params)
 
     def sync(self):
-        start_time = pendulum.utcnow()
-        previous_start_time = (
-            self.state.get("bookmarks", {})
-            .get("leads", {})
-            .get(self.replication_key, CONFIG.get("start_date"))
-        )
+        start_time = pendulum.now('UTC')
+        previous_start_time = self.state.get("bookmarks", {}).get("leads", {}).get(self.replication_key, CONFIG.get('start_date'))
 
         previous_start_time = pendulum.parse(previous_start_time)
         ads = self.get_ads()
@@ -814,13 +808,10 @@ def advance_bookmark(stream, bookmark_key, date):
             tap_stream_id,
         )
     elif not current_bookmark or date > current_bookmark:
-        LOGGER.info(
-            "Bookmark for stream %s is currently %s, " + "advancing to %s",
-            tap_stream_id,
-            current_bookmark,
-            date,
-        )
-        state = singer.write_bookmark(state, tap_stream_id, bookmark_key, str(date))
+        LOGGER.info('Bookmark for stream %s is currently %s, ' +
+                    'advancing to %s',
+                    tap_stream_id, current_bookmark, date)
+        state = singer.write_bookmark(state, tap_stream_id, bookmark_key, date.isoformat())
     else:
         LOGGER.info(
             "Bookmark for stream %s is currently %s " + "not changing to %s",
@@ -965,18 +956,19 @@ class AdsInsights(Stream):
 
             if status == "Job Completed":
                 return job
-            elif status == "Job Failed":
-                pretty_error_message = (
-                    "Insights job {} has failed. "
-                    + "This is an intermittent error and may resolve itself on subsequent queries to the Facebook API. "
-                    + "Reference: https://developers.facebook.com/docs/marketing-api/insights/best-practices/"
-                )
-                raise InsightsJobFailure(
-                    pretty_error_message.format(
-                        job_id
-                    )
-                )
-                
+
+            if status == "Job Failed":
+                error_code = job.get('error_code')
+                error_message = job.get('error_message')
+                error_subcode = job.get('error_subcode')
+                error_user_title = job.get('error_user_title')
+                error_user_msg = job.get('error_user_msg')
+                raise TapFacebookException(
+                    'Insights job {} failed. error_code={}, error_subcode={}, '
+                    'error_user_title={}, error_user_msg={}, error_message={}'.format(
+                        job_id, error_code, error_subcode,
+                        error_user_title, error_user_msg, error_message))
+
             if duration > INSIGHTS_MAX_WAIT_TO_START_SECONDS and percent_complete == 0:
                 pretty_error_message = (
                     "Insights job {} did not start after {} seconds. "
