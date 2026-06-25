@@ -248,9 +248,10 @@ class TestInsightJobs(unittest.TestCase):
         ad_insights_object = AdsInsights('', mocked_account, '', '', {}, {})
         with self.assertRaises(FacebookRequestError):
             ad_insights_object.run_job({})
-        # 5 is the max tries specified in the tap
+        # 5 outer retries × 5 inner api_get retries = 25
         self.assertEqual(25, mocked_account.get_insights.return_value.api_get.call_count)
-        self.assertEqual(5, mocked_account.get_insights.call_count )
+        # 5 outer retries × 2 get_insights calls per attempt (1 async job + 1 in rest()) = 10
+        self.assertEqual(10, mocked_account.get_insights.call_count)
 
 
 
@@ -301,8 +302,11 @@ class TestInsightJobs(unittest.TestCase):
         # Initialize the object and call `sync()`
         ad_insights_object = AdsInsights('', mocked_account, '', '', {}, {})
         ad_insights_object.run_job({})
+        # attempt 1: api_get(bad→inner retry) + api_get(failed→InsightsJobFailure→outer retry)
+        # attempt 2: api_get(good→Job Completed)  →  total = 3
         self.assertEqual(3, mocked_account.get_insights.return_value.api_get.call_count)
-        self.assertEqual(1, mocked_account.get_insights.call_count)
+        # 2 outer run_job attempts × 2 get_insights calls each (1 async job + 1 in rest()) = 4
+        self.assertEqual(4, mocked_account.get_insights.call_count)
 
     def test_job_failed_raises_tap_exception(self, mocked_sleep):
         """AdsInsights.run_job() polls the async job status. When api_get() returns
@@ -323,9 +327,13 @@ class TestInsightJobs(unittest.TestCase):
         mocked_api_get = Mock()
         mocked_api_get.return_value = failed_job_response
 
+        header_get = Mock()
+        header_get.return_value = {'x-fb-ads-insights-throttle': '{"acc_id_util_pct": 10}'}
+
         mocked_account = Mock()
         mocked_account.get_insights = Mock()
         mocked_account.get_insights.return_value.api_get = mocked_api_get
+        mocked_account.get_insights.return_value.headers = header_get
 
         ad_insights_object = AdsInsights('', mocked_account, '', '', {}, {})
 
@@ -339,5 +347,5 @@ class TestInsightJobs(unittest.TestCase):
         self.assertIn("Report Unavailable", error_str)
         self.assertIn("Your report could not be run due to a temporary issue.", error_str)
         self.assertIn("There was an error running your report.", error_str)
-        # Should fail immediately — no retries on job failure
-        self.assertEqual(1, mocked_api_get.call_count)
+        # InsightsJobFailure is retried by run_job up to 5 times before propagating
+        self.assertEqual(5, mocked_api_get.call_count)

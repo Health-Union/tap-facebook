@@ -68,7 +68,8 @@ STREAMS = [
     "ads_insights_country",
     "ads_insights_platform_and_device",
     "ads_insights_region",
-    "ads_insights_dma",
+    "ads_insights_dma",  # deprecated: breakdowns=dma removed by Meta on 2026-06-22; kept for back-reference only
+    "ads_insights_comscore_market",
     "ads_insights_hourly_advertiser",
     #'leads',
 ]
@@ -87,7 +88,8 @@ BOOKMARK_KEYS = {
     "ads_insights_country": START_DATE_KEY,
     "ads_insights_platform_and_device": START_DATE_KEY,
     "ads_insights_region": START_DATE_KEY,
-    "ads_insights_dma": START_DATE_KEY,
+    "ads_insights_dma": START_DATE_KEY,  # deprecated: breakdowns=dma removed by Meta on 2026-06-22; kept for back-reference only
+    "ads_insights_comscore_market": START_DATE_KEY,
     "ads_insights_hourly_advertiser": START_DATE_KEY,
     "leads": CREATED_TIME_KEY,
 }
@@ -849,6 +851,7 @@ class AdsInsights(Stream):
         "placement",
         "region",
         "dma",
+        "comscore_market",
         "hourly_stats_aggregated_by_advertiser_time_zone",
     ]
     FACEBOOK_INSIGHTS_RETENTION_PERIOD = 37  # months
@@ -963,7 +966,7 @@ class AdsInsights(Stream):
                 error_subcode = job.get('error_subcode')
                 error_user_title = job.get('error_user_title')
                 error_user_msg = job.get('error_user_msg')
-                raise TapFacebookException(
+                raise InsightsJobFailure(
                     'Insights job {} failed. error_code={}, error_subcode={}, '
                     'error_user_title={}, error_user_msg={}, error_message={}'.format(
                         job_id, error_code, error_subcode,
@@ -1055,7 +1058,9 @@ INSIGHTS_BREAKDOWNS_OPTIONS = {
         ],
     },
     "ads_insights_region": {"breakdowns": ["region"], "primary-keys": ["region"]},
+    # deprecated: breakdowns=dma removed by Meta on 2026-06-22; kept for back-reference only
     "ads_insights_dma": {"breakdowns": ["dma"], "primary-keys": ["dma"]},
+    "ads_insights_comscore_market": {"breakdowns": ["comscore_market"], "primary-keys": ["comscore_market"]},
     "ads_insights_hourly_advertiser": {
         "breakdowns": ["hourly_stats_aggregated_by_advertiser_time_zone"],
         "primary-keys": ["hourly_stats_aggregated_by_advertiser_time_zone"],
