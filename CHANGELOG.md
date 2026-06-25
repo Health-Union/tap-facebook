@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.26.0
+  * Add `ads_insights_comscore_market` stream using `breakdowns=comscore_market` (DATA-11906)
+  * Meta removed `breakdowns=dma` from the Ads Insights API on 2026-06-22; `ads_insights_dma` is retained for back-reference but will fail at runtime
+
 ## 1.25.2
   * Bump pendulum dependency from 1.2.0 to 3.2.0 [#269](https://github.com/singer-io/tap-facebook/pull/269)
   * Bump attrs dependency from 17.3.0 to 26.1.0
