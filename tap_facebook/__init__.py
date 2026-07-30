@@ -132,7 +132,6 @@ def retry_on_summary_param_error(backoff_type, exception, **wait_gen_kwargs):
 original_call = FacebookAdsApi.call
 
 @retry_on_summary_param_error(backoff.expo, (FacebookRequestError), max_tries=5, factor=5)
-@retry_on_adreport_job_not_ready_error(backoff.expo, (FacebookRequestError), max_tries=5, factor=5)
 def call_with_retry(self, method, path, params=None, headers=None, files=None, url_override=None, api_version=None,):
     """
     Adding the retry decorator on the original function call
@@ -1007,6 +1006,14 @@ class AdsInsights(Stream):
             time.sleep(sleep_time)
         return job
 
+    @retry_on_adreport_job_not_ready_error(backoff.expo, FacebookRequestError, max_tries=5, factor=5)
+    def get_job_result_rows(self, job):
+        """
+        Returns result of the job, retries with exponential backoff
+        if "The adreport job is not completed yet" error occurs
+        """
+        return list(job.get_result())
+
     def __iter__(self):
         for params in self.job_params():
             with metrics.job_timer("insights"):
@@ -1014,7 +1021,7 @@ class AdsInsights(Stream):
 
             min_date_start_for_job = None
             count = 0
-            for obj in job.get_result():
+            for obj in self.get_job_result_rows(job):
                 count += 1
                 rec = obj.export_all_data()
                 if (
