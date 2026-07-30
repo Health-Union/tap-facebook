@@ -47,6 +47,8 @@ from facebook_business.exceptions import (
 
 from requests.exceptions import ConnectionError, Timeout
 
+from tap_facebook.retry_helpers import retry_on_adreport_job_not_ready_error
+
 API = None
 
 INSIGHTS_MAX_WAIT_TO_START_SECONDS = 5 * 60
@@ -130,6 +132,7 @@ def retry_on_summary_param_error(backoff_type, exception, **wait_gen_kwargs):
 original_call = FacebookAdsApi.call
 
 @retry_on_summary_param_error(backoff.expo, (FacebookRequestError), max_tries=5, factor=5)
+@retry_on_adreport_job_not_ready_error(backoff.expo, (FacebookRequestError), max_tries=5, factor=5)
 def call_with_retry(self, method, path, params=None, headers=None, files=None, url_override=None, api_version=None,):
     """
     Adding the retry decorator on the original function call
