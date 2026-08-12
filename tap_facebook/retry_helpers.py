@@ -14,13 +14,19 @@ LOGGER = singer.get_logger()
 ADREPORT_JOB_NOT_READY_PATTERN = r'.*[Tt]he adreport job is not completed yet'
 
 
-def retry_on_adreport_job_not_ready_error(backoff_type, exception, **wait_gen_kwargs):
+def retry_on_adreport_job_not_ready_error(backoff_type, exception, wait_gen_kwargs):
     """
     The async insights job can report `async_status == "Job Completed"` while we're
     polling it, but the underlying report data isn't queryable yet (Facebook-side
     eventual consistency). Facebook returns a 400 error with the message "The
     adreport job is not completed yet" in that window. Retrying shortly after
     succeeds.
+
+    Suggested config.json shape:
+        "backoff_settings": {
+            "max_tries": 5,
+            "factor": 2
+        }
     """
     def log_retry_attempt(details):
         _, exc, _ = sys.exc_info()

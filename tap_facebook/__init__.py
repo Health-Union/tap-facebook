@@ -96,6 +96,8 @@ BOOKMARK_KEYS = {
     "leads": CREATED_TIME_KEY,
 }
 
+DEFAULT_BACKOFF_SETTINGS = {"max_tries": 5, "factor": 5}
+
 LOGGER = singer.get_logger()
 
 CONFIG = {}
@@ -872,6 +874,11 @@ class AdsInsights(Stream):
             if self.buffer_days not in [1, 7, 28]:
                 raise Exception("The attribution window must be 1, 7 or 28.")
 
+        backoff_settings = CONFIG.get("backoff_settings", DEFAULT_BACKOFF_SETTINGS)
+        self._retrying_get_result = retry_on_adreport_job_not_ready_error(
+            backoff.expo, FacebookRequestError, backoff_settings
+        )
+
     def job_params(self):
         start_date = get_start(self, self.bookmark_key)
 
@@ -1006,14 +1013,6 @@ class AdsInsights(Stream):
             time.sleep(sleep_time)
         return job
 
-    @retry_on_adreport_job_not_ready_error(backoff.expo, FacebookRequestError, max_tries=5, factor=5)
-    def get_job_result_rows(self, job):
-        """
-        Returns result of the job, retries with exponential backoff
-        if "The adreport job is not completed yet" error occurs
-        """
-        return list(job.get_result())
-
     def __iter__(self):
         for params in self.job_params():
             with metrics.job_timer("insights"):
@@ -1021,7 +1020,7 @@ class AdsInsights(Stream):
 
             min_date_start_for_job = None
             count = 0
-            for obj in self.get_job_result_rows(job):
+            for obj in list(self._retrying_get_result(job.get_result)()):
                 count += 1
                 rec = obj.export_all_data()
                 if (
