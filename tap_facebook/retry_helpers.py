@@ -11,10 +11,8 @@ from facebook_business.exceptions import FacebookRequestError
 
 LOGGER = singer.get_logger()
 
-ADREPORT_JOB_NOT_READY_PATTERN = r'.*[Tt]he adreport job is not completed yet'
 
-
-def retry_on_adreport_job_not_ready_error(backoff_type, exception, wait_gen_kwargs):
+def retry_on_adreport_job_not_ready_error(backoff_type, exception, error_pattern, wait_gen_kwargs):
     """
     The async insights job can report `async_status == "Job Completed"` while we're
     polling it, but the underlying report data isn't queryable yet (Facebook-side
@@ -27,6 +25,7 @@ def retry_on_adreport_job_not_ready_error(backoff_type, exception, wait_gen_kwar
             "max_tries": 5,
             "factor": 2
         }
+        "error_pattern": r'.*[Tt]he adreport job is not completed yet'
     """
     def log_retry_attempt(details):
         _, exc, _ = sys.exc_info()
@@ -37,7 +36,7 @@ def retry_on_adreport_job_not_ready_error(backoff_type, exception, wait_gen_kwar
     def should_retry_api_error(exc):
         if isinstance(exc, FacebookRequestError):
             message = (exc._error or {}).get('message', '')  # pylint: disable=protected-access
-            return exc.http_status() == 400 and bool(re.match(ADREPORT_JOB_NOT_READY_PATTERN, message))
+            return exc.http_status() == 400 and bool(re.match(error_pattern, message))
         return False
 
     return backoff.on_exception(

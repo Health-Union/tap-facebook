@@ -97,6 +97,7 @@ BOOKMARK_KEYS = {
 }
 
 DEFAULT_BACKOFF_SETTINGS = {"max_tries": 5, "factor": 5}
+ADREPORT_JOB_NOT_READY_PATTERN = r'.*[Tt]he adreport job is not completed yet'
 
 LOGGER = singer.get_logger()
 
@@ -874,9 +875,12 @@ class AdsInsights(Stream):
             if self.buffer_days not in [1, 7, 28]:
                 raise Exception("The attribution window must be 1, 7 or 28.")
 
+        # Gather job error processing parameters
         backoff_settings = CONFIG.get("backoff_settings", DEFAULT_BACKOFF_SETTINGS)
+        error_pattern = CONFIG.get("error_pattern", ADREPORT_JOB_NOT_READY_PATTERN)
+
         self._retrying_get_result = retry_on_adreport_job_not_ready_error(
-            backoff.expo, FacebookRequestError, backoff_settings
+            backoff.expo, FacebookRequestError, error_pattern, backoff_settings
         )
 
     def job_params(self):
