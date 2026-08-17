@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.27.0
+  * Add retry helper retry_on_adreport_job_not_ready_error (DATA-12015) to 
+  process frequently happened 400 error with the message "The
+    adreport job is not completed yet".
+  * Input parameters for this helper can be configured using config.json
+
 ## 1.26.0
   * Add `ads_insights_comscore_market` stream using `breakdowns=comscore_market` (DATA-11906)
   * Meta removed `breakdowns=dma` from the Ads Insights API on 2026-06-22; `ads_insights_dma` is retained for back-reference but will fail at runtime
